@@ -86,7 +86,102 @@ The skill produces an interactive React artifact with:
 - Shuffle mode
 - Responsive design
 
-Cards can be copied to Anki or other spaced repetition systems.
+### Anki Import
+
+The exported `.txt` file can be imported directly into Anki. You have two options:
+
+#### Quick Import (Basic note type)
+
+Import the file as-is using Anki's built-in **Basic** note type. You get Front/Back cards with layer and topic info in the Tags column. No setup required — just **File → Import** and go.
+
+#### Full Experience (Custom note type)
+
+For styled cards with a layer badge on the front and topic metadata on the back, create a custom note type first:
+
+1. Open Anki → **Tools → Manage Note Types**
+2. Click **Add** → choose **Add: Basic** → name it **"3-Layer Card"**
+3. Click **Fields...** and add two new fields: **Layer** and **Topic** (Front and Back already exist)
+4. Click **Cards...** and paste the templates below into the corresponding editors
+5. Click **Save**
+
+Then import: **File → Import** → select the `.txt` file → choose **"STEM Flashcards (3-Layer)"** as the note type → verify the 5-column field mapping → **Import**.
+
+<details>
+<summary><strong>Front Template</strong> (paste into front template editor)</summary>
+
+```html
+<div class="layer-badge">{{Layer}}</div>
+<div class="question">{{Front}}</div>
+```
+
+</details>
+
+<details>
+<summary><strong>Back Template</strong> (paste into back template editor)</summary>
+
+```html
+{{FrontSide}}
+<hr id="answer">
+<div class="answer">{{Back}}</div>
+<div class="metadata">
+  Topic: {{Topic}}
+</div>
+```
+
+</details>
+
+<details>
+<summary><strong>Styling</strong> (paste into styling editor)</summary>
+
+```css
+.card {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 20px;
+  text-align: center;
+  color: #1a1a1b;
+  background-color: #ffffff;
+  padding: 20px;
+}
+
+.layer-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: 600;
+  margin-bottom: 20px;
+  background: #f0f0f0;
+  color: #555;
+}
+
+.question {
+  font-size: 1.1em;
+  margin: 30px 0;
+  line-height: 1.5;
+}
+
+.answer {
+  margin: 30px 0;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.metadata {
+  margin-top: 25px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+  font-size: 0.8em;
+  color: #888;
+}
+
+hr#answer {
+  border: none;
+  border-top: 2px solid #e0e0e0;
+  margin: 20px 0;
+}
+```
+
+</details>
 
 ---
 
