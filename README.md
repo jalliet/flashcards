@@ -4,7 +4,7 @@ A Claude skill for generating atomic, cognitively-principled flashcards from tec
 
 ## What It Does
 
-Upload lecture notes, textbooks, or technical documentation. Get interactive flashcards organised into three cognitive layers:
+Upload lecture notes, textbooks, or technical documentation. Get flashcards organised into three cognitive layers, delivered as an interactive artifact, an Anki-ready TSV file, or pushed directly to Anki via MCP:
 
 | Layer | Tests | Example |
 |-------|-------|---------|
@@ -12,7 +12,7 @@ Upload lecture notes, textbooks, or technical documentation. Get interactive fla
 | **L2: Understanding** | Why/how, intuitions | "Why is the Jacobian useful for coordinate transforms?" |
 | **L3: Boundaries** | Limitations, edge cases | "When does the Jacobian become singular?" |
 
-The skill enforces atomicity (one concept per card), refuses to card inappropriate content (proofs, worked examples), and renders mathematical notation via KaTeX.
+The skill enforces atomicity (one concept per card), refuses to card inappropriate content (proofs, worked examples), and handles mathematical notation (KaTeX for artifacts, MathJax for Anki).
 
 ---
 
@@ -70,15 +70,27 @@ For best results with complex documents, also install from [anthropics/skills](h
 |-------|-----|
 | `pdf` | Better extraction from scanned/complex PDFs |
 | `docx` | Preserves formatting from Word documents |
-| `frontend-design` | Improves React artifact rendering and styling for academic content|
+| `frontend-design` | Improves React artifact rendering and styling for academic content in Artifact Mode|
 
 The flashcard skill works without these, but they improve source parsing.
+
+### MCP Mode Prerequisites
+
+To push cards directly to Anki (no file export/import), you need:
+
+1. **Anki 25.x or later** installed and running
+2. **[Anki MCP Server](https://ankiweb.net/shared/info/124672614) addon** — install via Tools → Add-ons → Get Add-ons → code `124672614` → restart Anki
+3. The server auto-starts on `http://127.0.0.1:3141/` when Anki opens
+
+The skill will automatically create the **"3-Layer Card"** note type and target deck if they don't exist. No manual Anki configuration needed beyond installing the addon.
 
 ---
 
 ## Output
 
-The skill produces an interactive React artifact with:
+### Interactive Artifact (default)
+
+An interactive and shareable Claude Artifact component with:
 
 - Layer filtering (L1/L2/L3 tabs)
 - Topic filtering
@@ -86,7 +98,7 @@ The skill produces an interactive React artifact with:
 - Shuffle mode
 - Responsive design
 
-### Anki Import
+### Anki TSV Import
 
 The exported `.txt` file can be imported directly into Anki. You have two options:
 
@@ -94,7 +106,17 @@ The exported `.txt` file can be imported directly into Anki. You have two option
 
 Import the file as-is using Anki's built-in **Basic** note type. You get Front/Back cards with layer and topic info in the Tags column. No setup required — just **File → Import** and go.
 
-#### Full Experience (Custom note type)
+### Anki Direct Push (via MCP)
+
+With the [Anki MCP Server addon](https://ankiweb.net/shared/info/124672614) by [anatoly314](https://github.com/anatoly314), cards are created directly in Anki — including automatic note type and deck setup. No file export or manual import.
+
+> "Push these flashcards directly to my Anki"
+
+> "Send the cards to my STEM deck in Anki"
+
+See [MCP Mode Prerequisites](#mcp-mode-prerequisites) for one-time setup.
+
+#### Anki Manual Import (using a custom note type)
 
 For styled cards with a layer badge on the front and topic metadata on the back, create a custom note type first:
 
@@ -104,7 +126,7 @@ For styled cards with a layer badge on the front and topic metadata on the back,
 4. Click **Cards...** and paste the templates below into the corresponding editors
 5. Click **Save**
 
-Then import: **File → Import** → select the `.txt` file → choose **"STEM Flashcards (3-Layer)"** as the note type → verify the 5-column field mapping → **Import**.
+Then import: **File → Import** → select the `.txt` file → choose **"3-Layer Card"** as the note type → verify the 5-column field mapping → **Import**.
 
 <details>
 <summary><strong>Front Template</strong> (paste into front template editor)</summary>
@@ -189,13 +211,23 @@ hr#answer {
 
 ```
 generating-stem-flashcards/
-├── README.md                 # This file
-├── THEORY.md                 # Scientific foundations (Bloom, CLT, etc.)
-├── SKILL.md                  # Main skill instructions
+├── README.md                   # This file
+├── THEORY.md                   # Scientific foundations (Bloom, CLT, etc.)
+├── SKILL.md                    # Main skill instructions
 ├── references/
-│   ├── COGNITIVE_LAYERS.md   # L1/L2/L3 definitions
-│   ├── ATOMICITY.md          # Quality rules, refusal policy
-│   └── LATEX_SYNTAX.md       # KaTeX reference
+│   ├── COGNITIVE_LAYERS.md     # L1/L2/L3 definitions
+│   ├── ATOMICITY.md            # Quality rules, refusal policy
+│   └── LATEX_SYNTAX.md         # KaTeX reference
+├── anki/
+│   ├── WORKFLOW.md             # TSV export build steps
+│   ├── MCP_WORKFLOW.md         # MCP direct push steps
+│   ├── RENDERING.md            # MathJax delimiter rules
+│   ├── IMPORT_GUIDE.md         # User-facing import instructions (TSV only)
+│   └── NOTE_TYPE_TEMPLATE.md   # Note type, templates, and CSS
+├── artifact/
+│   ├── WORKFLOW.md             # Artifact build steps
+│   ├── RENDERING.md            # KaTeX rendering rules
+│   └── template.jsx            # React artifact template
 └── assets/
     └── flashcard_template.jsx
 ```
