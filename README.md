@@ -14,6 +14,25 @@ Upload lecture notes, textbooks, or technical documentation. Get flashcards orga
 
 The skill enforces atomicity (one concept per card), refuses to card inappropriate content (proofs, worked examples), and handles mathematical notation (KaTeX for artifacts, MathJax for Anki).
 
+## Table of Contents
+
+- [What It Does](#what-it-does)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Recommended Setup](#recommended-setup)
+  - [Projects](#projects)
+  - [Complementary Skills](#complementary-skills)
+  - [MCP Mode Prerequisites](#mcp-mode-prerequisites)
+- [Output](#output)
+  - [Interactive Artifact](#interactive-artifact-default)
+  - [Anki TSV Import](#anki-tsv-import)
+  - [Anki Direct Push (via MCP)](#anki-direct-push-via-mcp)
+  - [Anki Manual Import](#anki-manual-import-using-a-custom-note-type)
+- [Troubleshooting](#troubleshooting)
+- [File Structure](#file-structure)
+- [Why This Skill?](#why-this-skill)
+- [License](#license)
+
 ---
 
 ## Installation
@@ -76,13 +95,62 @@ The flashcard skill works without these, but they improve source parsing.
 
 ### MCP Mode Prerequisites
 
-To push cards directly to Anki (no file export/import), you need:
+To push cards directly to Anki (no file export/import), you need the Anki MCP Server addon and a properly configured MCP client (e.g. Claude Desktop).
 
-1. **Anki 25.x or later** installed and running
-2. **[Anki MCP Server](https://ankiweb.net/shared/info/124672614) addon** — install via Tools → Add-ons → Get Add-ons → code `124672614` → restart Anki
-3. The server auto-starts on `http://127.0.0.1:3141/` when Anki opens
+#### 1. Install the Anki MCP Server addon
 
-The skill will automatically create the **"3-Layer Card"** note type and target deck if they don't exist. No manual Anki configuration needed beyond installing the addon.
+| Resource | Link |
+|----------|------|
+| AnkiWeb addon page | [ankiweb.net/shared/info/124672614](https://ankiweb.net/shared/info/124672614) |
+| GitHub repo | [github.com/ankimcp/anki-mcp-server-addon](https://github.com/ankimcp/anki-mcp-server-addon) |
+| Project homepage | [ankimcp.ai](https://ankimcp.ai/) |
+
+1. **Anki 25.x or later** must be installed and running
+2. In Anki: **Tools → Add-ons → Get Add-ons...** → enter code `124672614` → restart Anki
+3. The MCP server auto-starts on `http://127.0.0.1:3141/` when Anki opens
+
+Verify the server is running:
+
+```bash
+curl -s http://127.0.0.1:3141/ \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"capabilities":{},"clientInfo":{"name":"test"},"protocolVersion":"2024-11-05"}}'
+```
+
+You should get a JSON response containing `"serverInfo"` — that confirms the server is running.
+
+#### 2. Configure Claude Desktop
+
+The addon uses **Streamable HTTP** transport. Claude Desktop requires `mcp-remote` to bridge stdio ↔ HTTP.
+
+Edit your Claude Desktop config file:
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+Add the `"anki"` entry under `"mcpServers"`:
+
+```json
+{
+  "mcpServers": {
+    "anki": {
+      "command": "/bin/bash",
+      "args": [
+        "-c",
+        "npx -y mcp-remote http://127.0.0.1:3141/ --allow-http"
+      ]
+    }
+  }
+}
+```
+
+Restart Claude Desktop. You should see **anki: running** in the MCP server indicator (🔌 icon).
+
+> **Node.js ≥ 20** is required — `mcp-remote` depends on `undici` which needs Node 20.18.1+. If you hit connection errors, see [Troubleshooting](#troubleshooting).
+
+#### 3. What the skill auto-configures
+
+The skill will automatically create the **"3-Layer Card"** note type and target deck if they don't exist. No manual Anki configuration needed beyond installing the addon and connecting Claude Desktop.
 
 ---
 
@@ -114,7 +182,7 @@ With the [Anki MCP Server addon](https://ankiweb.net/shared/info/124672614) by [
 
 > "Send the cards to my STEM deck in Anki"
 
-See [MCP Mode Prerequisites](#mcp-mode-prerequisites) for one-time setup.
+See [MCP Mode Prerequisites](#mcp-mode-prerequisites) for one-time setup. Having trouble connecting? See [Troubleshooting](#troubleshooting).
 
 #### Anki Manual Import (using a custom note type)
 
@@ -204,6 +272,96 @@ hr#answer {
 ```
 
 </details>
+
+---
+
+## Troubleshooting
+
+If the MCP connection between Claude Desktop and Anki isn't working, work through these steps in order.
+
+### 1. Verify the Anki MCP Server is running
+
+Make sure Anki is open, then test the server from a terminal:
+
+```bash
+curl -s http://127.0.0.1:3141/ \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"capabilities":{},"clientInfo":{"name":"test"},"protocolVersion":"2024-11-05"}}'
+```
+
+If you get a JSON response with `"serverInfo"`, the server is healthy. If you get `connection refused`, the addon isn't loaded — check **Tools → Add-ons** in Anki and restart.
+
+### 2. Check your Node.js version
+
+`mcp-remote` depends on `undici@7.x`, which requires **Node.js ≥ 20.18.1**. Check your version:
+
+```bash
+node --version
+```
+
+If it's below v20, install a newer version. With [nvm](https://github.com/nvm-sh/nvm):
+
+```bash
+# If nvm isn't found, load it first:
+export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh"
+
+nvm install 22
+nvm use 22
+node --version  # should show v22.x
+```
+
+### 3. macOS: Claude Desktop doesn't inherit your shell environment
+
+macOS GUI apps don't see shell-only tools like `nvm`. Even if `node --version` shows v22 in your terminal, Claude Desktop may still use an older Node.
+
+**Fix:** Use an absolute path or a `/bin/bash` wrapper in your config to explicitly set `PATH`:
+
+```json
+{
+  "mcpServers": {
+    "anki": {
+      "command": "/bin/bash",
+      "args": [
+        "-c",
+        "export PATH=$HOME/.nvm/versions/node/v22.22.0/bin:$PATH && npx -y mcp-remote http://127.0.0.1:3141/ --allow-http"
+      ]
+    }
+  }
+}
+```
+
+Replace `v22.22.0` with your actual installed Node version. Find it with:
+
+```bash
+ls ~/.nvm/versions/node/
+```
+
+**Alternative:** Claude Desktop has a **"Use Built-in Node.js for MCP"** toggle under **Settings → Extensions**. Enabling this can bypass the PATH issue entirely.
+
+### 4. Clear the stale npx cache
+
+If you upgraded Node but `mcp-remote` still crashes, the npx cache may contain a build from the old Node version:
+
+```bash
+rm -rf ~/.npm/_npx/*
+```
+
+Then restart Claude Desktop. The package will be re-downloaded and built against the correct Node version.
+
+### 5. Common error messages
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `Server disconnected` | Node.js too old, or stale cache | Steps 2–4 |
+| `ReferenceError: File is not defined` | Node < 20 (missing `File` global) | Upgrade Node (step 2) |
+| `"command" Required` | Claude Desktop doesn't support `"url"` transport | Use the `mcp-remote` bridge config (step 3) |
+| `connection refused` on curl | Anki not running or addon not installed | Step 1 |
+
+### 6. Still stuck?
+
+- Check the [addon GitHub issues](https://github.com/ankimcp/anki-mcp-server-addon/issues) for known problems
+- View Claude Desktop MCP logs: **Help → Diagnostics → MCP Log**
+- Claude Desktop log files are at `~/Library/Logs/Claude/` (macOS)
 
 ---
 
