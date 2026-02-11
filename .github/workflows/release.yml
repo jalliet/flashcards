@@ -16,7 +16,7 @@ jobs:
 
       - name: Build skill package
         run: |
-          cd flashcards
+          cd ./flashcards
           zip -r ../flashcards-${{ github.ref_name }}.zip \
             SKILL.md \
             references/ \
