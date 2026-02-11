@@ -37,9 +37,22 @@ The skill enforces atomicity (one concept per card), refuses to card inappropria
 
 ## Installation
 
-1. Clone this repo or download as ZIP: `git clone https://github.com/jalliet/flashcards.git`
-2. Create a skill package: `zip -r flashcards.zip SKILL.md references/ assets/`
-3. Upload to Claude.ai: **Settings > Capabilities > Skills > Upload Skill**
+### Quick Install (recommended)
+
+1. Download `flashcards-vX.X.X.zip` from the [latest release](https://github.com/jalliet/flashcards/releases/latest)
+2. Upload to Claude.ai: **Settings > Capabilities > Skills > Upload Skill**
+
+That's it.
+
+### From Source
+
+```bash
+git clone https://github.com/jalliet/flashcards.git
+cd flashcards/flashcards
+zip -r ../flashcards.zip SKILL.md references/ anki/ artifact/ -x "README.md" "**/.DS_Store"
+```
+
+Then upload `flashcards.zip` to Claude.ai as above.
 
 ---
 
@@ -390,7 +403,7 @@ generating-stem-flashcards/
     └── flashcard_template.jsx
 ```
 
-**Note**: Only the skill files (SKILL.md, references/, assets/) are packaged in the `.skill` file. README.md and THEORY.md are GitHub documentation only.
+**Note**: Only the skill files inside `flashcards/` (SKILL.md, references/, anki/, artifact/) are packaged in releases. README.md and THEORY.md are GitHub documentation only. Releases are built automatically via GitHub Actions when a version tag is pushed.
 
 ---
 

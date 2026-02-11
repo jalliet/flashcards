@@ -1,0 +1,31 @@
+name: Release Skill Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build skill package
+        run: |
+          cd flashcards
+          zip -r ../flashcards-${{ github.ref_name }}.zip \
+            SKILL.md \
+            references/ \
+            anki/ \
+            artifact/ \
+            -x "README.md" "**/.DS_Store"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: flashcards-${{ github.ref_name }}.zip
+          generate_release_notes: true
