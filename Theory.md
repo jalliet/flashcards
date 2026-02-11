@@ -158,7 +158,7 @@ Three items is conservative enough to work for novices while still allowing mean
 Most flashcard generators try to card everything. This produces:
 - 15-step algorithm cards that are impossible to recall
 - Proof cards that require sequential reasoning, not retrieval
-- Worked example cards that test nothing
+- Worked example cards that test absolutely nothing
 
 The refusal policy explicitly names content types that shouldn't become flashcards. This is a feature, not a limitation.
 
