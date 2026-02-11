@@ -12,25 +12,38 @@ Upload lecture notes, textbooks, or technical documentation. Get flashcards orga
 | **L2: Understanding** | Why/how, intuitions | "Why is the Jacobian useful for coordinate transforms?" |
 | **L3: Boundaries** | Limitations, edge cases | "When does the Jacobian become singular?" |
 
-The skill enforces atomicity (one concept per card), refuses to card inappropriate content (proofs, worked examples), and handles mathematical notation (KaTeX for artifacts, MathJax for Anki).
+The skill enforces atomicity (one concept per card), refuses to generate cards for inappropriate content (proofs, worked examples), and handles mathematical notation (KaTeX for Claude Artifacts, MathJax for Anki).
+
+---
+
+## Why This Skill?
+
+Most AI flashcard generators produce low-quality cards: compound questions, no cognitive framework, no quality control.
+
+This skill encodes learning science directly into generation:
+
+- **Bloom's Taxonomy** → Three-Layer Structure
+- **Cognitive Load Theory** → Atomicity Rules
+- **Minimum Information Principle** → Refusal Policy
+
+See [THEORY.md](THEORY.md) for the full scientific foundation with citations.
+
+---
 
 ## Table of Contents
 
 - [What It Does](#what-it-does)
+- [Why This Skill?](#why-this-skill)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Recommended Setup](#recommended-setup)
-  - [Projects](#projects)
+- [Best Practices](#best-practices)
+  - [Claude Projects](#projects)
   - [Complementary Skills](#complementary-skills)
-  - [MCP Mode Prerequisites](#mcp-mode-prerequisites)
 - [Output](#output)
   - [Interactive Artifact](#interactive-artifact-default)
   - [Anki TSV Import](#anki-tsv-import)
   - [Anki Direct Push (via MCP)](#anki-direct-push-via-mcp)
-  - [Anki Manual Import](#anki-manual-import-using-a-custom-note-type)
-- [Troubleshooting](#troubleshooting)
 - [File Structure](#file-structure)
-- [Why This Skill?](#why-this-skill)
 - [License](#license)
 
 ---
@@ -44,16 +57,6 @@ The skill enforces atomicity (one concept per card), refuses to card inappropria
 
 That's it.
 
-### From Source
-
-```bash
-git clone https://github.com/jalliet/flashcards.git
-cd flashcards/flashcards
-zip -r ../flashcards.zip SKILL.md references/ anki/ artifact/ -x "README.md" "**/.DS_Store"
-```
-
-Then upload `flashcards.zip` to Claude.ai as above.
-
 ---
 
 ## Usage
@@ -62,7 +65,7 @@ Then upload `flashcards.zip` to Claude.ai as above.
 
 Upload a PDF, paste lecture notes, or describe a topic:
 
-> "Generate flashcards spanning topicas from all the project files."
+> "Generate flashcards spanning topics from all the project files."
 
 > "Create flashcards covering gradient descent, including failure modes"
 
@@ -84,19 +87,20 @@ Upload a PDF, paste lecture notes, or describe a topic:
 
 ---
 
-## Recommended Setup
+## Best Practices
 
 ### Projects
 
 Create a Claude Project for your course/subject. Add:
 
-1. This skill (`.skill` file)
-2. Your lecture notes and readings
-3. Project instructions like: "Always use the flashcard skill when I ask for revision materials"
+1. The skill (upload the `.zip` from releases via "Add Content" > "Upload Skill")
+2. Your lecture notes & transcripts, readings, exercise sheets, solution sheets
+3. Project instructions like: "Always use the flashcard skill when I ask for revision materials". You could also place this instruction in Claude's global default instructions at **Settings** > **General** > **What personal preferences should Claude consider in responses?**
+
 
 ### Complementary Skills
 
-For best results with complex documents, also install from [anthropics/skills](https://github.com/anthropics/skills):
+For best results with complex documents, also install from directly inside the Claude Desktop app or at [anthropics/skills](https://github.com/anthropics/skills):
 
 | Skill | Why |
 |-------|-----|
@@ -106,70 +110,12 @@ For best results with complex documents, also install from [anthropics/skills](h
 
 The flashcard skill works without these, but they improve source parsing.
 
-### MCP Mode Prerequisites
-
-To push cards directly to Anki (no file export/import), you need the Anki MCP Server addon and a properly configured MCP client (e.g. Claude Desktop).
-
-#### 1. Install the Anki MCP Server addon
-
-| Resource | Link |
-|----------|------|
-| AnkiWeb addon page | [ankiweb.net/shared/info/124672614](https://ankiweb.net/shared/info/124672614) |
-| GitHub repo | [github.com/ankimcp/anki-mcp-server-addon](https://github.com/ankimcp/anki-mcp-server-addon) |
-| Project homepage | [ankimcp.ai](https://ankimcp.ai/) |
-
-1. **Anki 25.x or later** must be installed and running
-2. In Anki: **Tools → Add-ons → Get Add-ons...** → enter code `124672614` → restart Anki
-3. The MCP server auto-starts on `http://127.0.0.1:3141/` when Anki opens
-
-Verify the server is running:
-
-```bash
-curl -s http://127.0.0.1:3141/ \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"capabilities":{},"clientInfo":{"name":"test"},"protocolVersion":"2024-11-05"}}'
-```
-
-You should get a JSON response containing `"serverInfo"` — that confirms the server is running.
-
-#### 2. Configure Claude Desktop
-
-The addon uses **Streamable HTTP** transport. Claude Desktop requires `mcp-remote` to bridge stdio ↔ HTTP.
-
-Edit your Claude Desktop config file:
-
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-
-Add the `"anki"` entry under `"mcpServers"`:
-
-```json
-{
-  "mcpServers": {
-    "anki": {
-      "command": "/bin/bash",
-      "args": [
-        "-c",
-        "npx -y mcp-remote http://127.0.0.1:3141/ --allow-http"
-      ]
-    }
-  }
-}
-```
-
-Restart Claude Desktop. You should see **anki: running** in the MCP server indicator (🔌 icon).
-
-> **Node.js ≥ 20** is required — `mcp-remote` depends on `undici` which needs Node 20.18.1+. If you hit connection errors, see [Troubleshooting](#troubleshooting).
-
-#### 3. What the skill auto-configures
-
-The skill will automatically create the **"3-Layer Card"** note type and target deck if they don't exist. No manual Anki configuration needed beyond installing the addon and connecting Claude Desktop.
-
 ---
 
 ## Output
 
-### Interactive Artifact (default)
+<details open>
+<summary><strong>Interactive Claude Artifact (default)</strong></summary>
 
 An interactive and shareable Claude Artifact component with:
 
@@ -179,25 +125,20 @@ An interactive and shareable Claude Artifact component with:
 - Shuffle mode
 - Responsive design
 
-### Anki TSV Import
+**[View Example Artifact](https://claude.ai/public/artifacts/6c97797f-3b9d-4245-a5b5-5a4d5da02fcf)**
+
+</details>
+
+<details>
+<summary><strong>Anki TSV Import (Manual)</strong></summary>
 
 The exported `.txt` file can be imported directly into Anki. You have two options:
 
-#### Quick Import (Basic note type)
+#### Option 1: Quick Import (Basic note type)
 
-Import the file as-is using Anki's built-in **Basic** note type. You get Front/Back cards with layer and topic info in the Tags column. No setup required — just **File → Import** and go.
+Import the file as-is using Anki's built-in **Basic** note type. You get Front/Back cards with layer and topic info in the Tags column. No setup required, just **File → Import** and go.
 
-### Anki Direct Push (via MCP)
-
-With the [Anki MCP Server addon](https://ankiweb.net/shared/info/124672614) by [anatoly314](https://github.com/anatoly314), cards are created directly in Anki — including automatic note type and deck setup. No file export or manual import.
-
-> "Push these flashcards directly to my Anki"
-
-> "Send the cards to my STEM deck in Anki"
-
-See [MCP Mode Prerequisites](#mcp-mode-prerequisites) for one-time setup. Having trouble connecting? See [Troubleshooting](#troubleshooting).
-
-#### Anki Manual Import (using a custom note type)
+#### Option 2: Advanced Import (using a custom note type)
 
 For styled cards with a layer badge on the front and topic metadata on the back, create a custom note type first:
 
@@ -286,15 +227,34 @@ hr#answer {
 
 </details>
 
----
+</details>
 
-## Troubleshooting
+<details>
+<summary><strong>Anki Direct Push (via MCP)</strong></summary>
 
-If the MCP connection between Claude Desktop and Anki isn't working, work through these steps in order.
+With the [Anki MCP Server addon](https://ankiweb.net/shared/info/124672614) by [anatoly314](https://github.com/anatoly314), cards are created directly in Anki, including automatic note type and deck setup. No file export or manual import.
 
-### 1. Verify the Anki MCP Server is running
+> "Push these flashcards directly to my Anki"
 
-Make sure Anki is open, then test the server from a terminal:
+> "Send the cards to my STEM deck in Anki"
+
+### Prerequisites & Setup
+
+To use this mode, you need the Anki MCP Server addon and a properly configured MCP client (e.g. Claude Desktop).
+
+#### 1. Install the Anki MCP Server addon
+
+| Resource | Link |
+|----------|------|
+| AnkiWeb addon page | [ankiweb.net/shared/info/124672614](https://ankiweb.net/shared/info/124672614) |
+| GitHub repo | [github.com/ankimcp/anki-mcp-server-addon](https://github.com/ankimcp/anki-mcp-server-addon) |
+| Project homepage | [ankimcp.ai](https://ankimcp.ai/) |
+
+1. **Anki 25.x or later** must be installed and running
+2. In Anki: **Tools → Add-ons → Get Add-ons...** → enter code `124672614` → restart Anki
+3. The MCP server auto-starts on `http://127.0.0.1:3141/` when Anki opens
+
+Verify the server is running:
 
 ```bash
 curl -s http://127.0.0.1:3141/ \
@@ -302,9 +262,59 @@ curl -s http://127.0.0.1:3141/ \
   -d '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"capabilities":{},"clientInfo":{"name":"test"},"protocolVersion":"2024-11-05"}}'
 ```
 
-If you get a JSON response with `"serverInfo"`, the server is healthy. If you get `connection refused`, the addon isn't loaded — check **Tools → Add-ons** in Anki and restart.
+You should get a JSON response containing `"serverInfo"`, which confirms the server is running.
 
-### 2. Check your Node.js version
+#### 2. Configure Claude Desktop
+
+The addon uses **Streamable HTTP** transport. Claude Desktop requires `mcp-remote` to bridge stdio ↔ HTTP.
+
+Edit your Claude Desktop config file:
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+Add the `"anki"` entry under `"mcpServers"`:
+
+```json
+{
+  "mcpServers": {
+    "anki": {
+      "command": "/bin/bash",
+      "args": [
+        "-c",
+        "npx -y mcp-remote http://127.0.0.1:3141/ --allow-http"
+      ]
+    }
+  }
+}
+```
+
+Restart Claude Desktop. You should see **anki: running** in the MCP server indicator (🔌 icon).
+
+> **Node.js ≥ 20** is required. `mcp-remote` depends on `undici` which needs Node 20.18.1+. If you hit connection errors, see [Troubleshooting](#mcp-troubleshooting).
+
+#### 3. What the skill auto-configures
+
+The skill will automatically create the **"3-Layer Card"** note type and target deck if they don't exist. No manual Anki configuration needed beyond installing the addon and connecting Claude Desktop.
+
+<details>
+<summary><strong>Troubleshooting</strong></summary>
+
+If the MCP connection between Claude Desktop and Anki isn't working, work through these steps in order.
+
+#### 1. Verify the Anki MCP Server is running
+
+Make sure Anki is open first, then test the server from a terminal:
+
+```bash
+curl -s http://127.0.0.1:3141/ \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"capabilities":{},"clientInfo":{"name":"test"},"protocolVersion":"2024-11-05"}}'
+```
+
+If you get a JSON response with `"serverInfo"`, the server is healthy. If you get `connection refused`, the addon isn't loaded; check **Tools → Add-ons** in Anki and restart.
+
+#### 2. Check your Node.js version
 
 `mcp-remote` depends on `undici@7.x`, which requires **Node.js ≥ 20.18.1**. Check your version:
 
@@ -323,7 +333,7 @@ nvm use 22
 node --version  # should show v22.x
 ```
 
-### 3. macOS: Claude Desktop doesn't inherit your shell environment
+#### 3. macOS: Claude Desktop doesn't inherit your shell environment
 
 macOS GUI apps don't see shell-only tools like `nvm`. Even if `node --version` shows v22 in your terminal, Claude Desktop may still use an older Node.
 
@@ -351,7 +361,7 @@ ls ~/.nvm/versions/node/
 
 **Alternative:** Claude Desktop has a **"Use Built-in Node.js for MCP"** toggle under **Settings → Extensions**. Enabling this can bypass the PATH issue entirely.
 
-### 4. Clear the stale npx cache
+#### 4. Clear the stale npx cache
 
 If you upgraded Node but `mcp-remote` still crashes, the npx cache may contain a build from the old Node version:
 
@@ -361,7 +371,7 @@ rm -rf ~/.npm/_npx/*
 
 Then restart Claude Desktop. The package will be re-downloaded and built against the correct Node version.
 
-### 5. Common error messages
+#### 5. Common error messages
 
 | Error | Cause | Fix |
 |-------|-------|-----|
@@ -370,11 +380,15 @@ Then restart Claude Desktop. The package will be re-downloaded and built against
 | `"command" Required` | Claude Desktop doesn't support `"url"` transport | Use the `mcp-remote` bridge config (step 3) |
 | `connection refused` on curl | Anki not running or addon not installed | Step 1 |
 
-### 6. Still stuck?
+#### 6. Still stuck?
 
 - Check the [addon GitHub issues](https://github.com/ankimcp/anki-mcp-server-addon/issues) for known problems
 - View Claude Desktop MCP logs: **Help → Diagnostics → MCP Log**
 - Claude Desktop log files are at `~/Library/Logs/Claude/` (macOS)
+
+</details>
+
+</details>
 
 ---
 
@@ -404,20 +418,6 @@ generating-stem-flashcards/
 ```
 
 **Note**: Only the skill files inside `flashcards/` (SKILL.md, references/, anki/, artifact/) are packaged in releases. README.md and THEORY.md are GitHub documentation only. Releases are built automatically via GitHub Actions when a version tag is pushed.
-
----
-
-## Why This Skill?
-
-Most AI flashcard generators produce low-quality cards: compound questions, no cognitive framework, no quality control.
-
-This skill encodes learning science directly into generation:
-
-- **Bloom's Taxonomy** → Three-layer structure
-- **Cognitive Load Theory** → Atomicity rules
-- **Minimum Information Principle** → Refusal policy
-
-See [THEORY.md](THEORY.md) for the full scientific foundation with citations.
 
 ---
 
