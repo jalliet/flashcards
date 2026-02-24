@@ -395,7 +395,7 @@ Then restart Claude Desktop. The package will be re-downloaded and built against
 ## File Structure
 
 ```
-generating-stem-flashcards/
+flashcards/
 ├── README.md                   # This file
 ├── THEORY.md                   # Scientific foundations (Bloom, CLT, etc.)
 ├── SKILL.md                    # Main skill instructions
